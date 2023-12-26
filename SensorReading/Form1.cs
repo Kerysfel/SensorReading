@@ -418,6 +418,7 @@ namespace SensorReading
                         azimuthMTI *= 180 / Math.PI;
                         azimuthADIS *= 180 / Math.PI;
 
+                        //Корректировки для ортогональных преобразований
                         if (azimuthRM3100 < 0)
                         {
                             azimuthRM3100 += 360;
