@@ -21,7 +21,11 @@ namespace SensorReading
         bool isReadingData = false;
         int currentMouseOver = 0;
         public Dictionary<int, string> spisokPropuskov = new Dictionary<int, string>();
-        int plus = 0;
+        //Предыдущая таблица
+        public string lastName = "Все данные";
+        //Словарь для хранения данных по каждому шаблону
+        Dictionary<string, List<string[]>> templatesData = new Dictionary<string, List<string[]>>();
+
         //Словарь для хранения настроек шаблонов
         Dictionary<int, string> cellDescriptions = new Dictionary<int, string>
         {
@@ -103,6 +107,43 @@ namespace SensorReading
             SetRoundedShape(ConnectYellowMini, 22);
             SetRoundedShape(ConnectRedMini, 22);
             SensorGridView.ClearSelection();
+        }
+        private void SaveCurrentGridViewData(string templateName)
+        {
+            if (!templatesData.ContainsKey(templateName))
+            {
+                templatesData[templateName] = new List<string[]>();
+            }
+
+            templatesData[templateName].Clear();
+
+            //Сохраняем все строки кроме последней
+            for (int rowIndex = 0; rowIndex < SensorGridView.Rows.Count - 1; rowIndex++)
+            {
+                DataGridViewRow row = SensorGridView.Rows[rowIndex];
+                string[] rowData = new string[row.Cells.Count];
+                for (int i = 0; i < row.Cells.Count; i++)
+                {
+                    rowData[i] = row.Cells[i].Value?.ToString() ?? "";
+                }
+
+                templatesData[templateName].Add(rowData);
+            }
+            foreach (DataGridViewRow row in SensorGridView.Rows)
+            {
+
+            }
+        }
+        private void LoadGridViewData(string templateName)
+        {
+            if (!templatesData.ContainsKey(templateName)) return;
+
+            SensorGridView.Rows.Clear();
+
+            foreach (var rowData in templatesData[templateName])
+            {
+                SensorGridView.Rows.Add(rowData);
+            }
         }
         private void LoadDataIntoGridView(int[] template)
         {
@@ -874,6 +915,7 @@ namespace SensorReading
             {
                 return; // Если шаблон не найден, прерываем выполнение
             }
+            SaveCurrentGridViewData(lastName);
             LoadDataIntoGridView(tableTemplates[$"{selectedTemplate}"]);
 
             if (selectedTemplate == "Магнитные азимуты")
@@ -882,7 +924,9 @@ namespace SensorReading
                 SensorGridView.Rows.Insert(2, 1);
             }
 
+            LoadGridViewData(selectedTemplate);
             RepairDataInGridView();
+            lastName = selectedTemplate;
         }
     }
 }
