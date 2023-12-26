@@ -30,7 +30,7 @@ namespace SensorReading
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             this.panel1 = new System.Windows.Forms.Panel();
             this.OpenFormFull = new System.Windows.Forms.Button();
             this.ConnectRedMini = new System.Windows.Forms.Panel();
@@ -60,6 +60,7 @@ namespace SensorReading
             this.SaveDataToFile = new System.Windows.Forms.Button();
             this.ClearButton = new System.Windows.Forms.Button();
             this.selectTableBox = new System.Windows.Forms.ComboBox();
+            this.TableType = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Signed)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.StatusListing)).BeginInit();
@@ -272,7 +273,7 @@ namespace SensorReading
             this.ComConnectorsList.ItemHeight = 16;
             this.ComConnectorsList.Location = new System.Drawing.Point(335, 67);
             this.ComConnectorsList.Name = "ComConnectorsList";
-            this.ComConnectorsList.Size = new System.Drawing.Size(92, 52);
+            this.ComConnectorsList.Size = new System.Drawing.Size(92, 68);
             this.ComConnectorsList.TabIndex = 10;
             // 
             // StatusListing
@@ -309,12 +310,12 @@ namespace SensorReading
             this.SensorGridView.Location = new System.Drawing.Point(16, 223);
             this.SensorGridView.Name = "SensorGridView";
             this.SensorGridView.RowHeadersVisible = false;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Menu;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.Color.Black;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.Color.LightSteelBlue;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.Color.White;
-            this.SensorGridView.RowsDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Menu;
+            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle4.ForeColor = System.Drawing.Color.Black;
+            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.Color.LightSteelBlue;
+            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.Color.White;
+            this.SensorGridView.RowsDefaultCellStyle = dataGridViewCellStyle4;
             this.SensorGridView.Size = new System.Drawing.Size(772, 317);
             this.SensorGridView.TabIndex = 13;
             this.SensorGridView.CellPainting += new System.Windows.Forms.DataGridViewCellPaintingEventHandler(this.SensorGridView_CellPainting_1);
@@ -412,12 +413,24 @@ namespace SensorReading
             this.selectTableBox.FormattingEnabled = true;
             this.selectTableBox.Items.AddRange(new object[] {
             "Все данные",
-            "Магнитные азимуты"});
-            this.selectTableBox.Location = new System.Drawing.Point(443, 95);
+            "Магнитные азимуты",
+            "Акселерометры",
+            "Магнитометры"});
+            this.selectTableBox.Location = new System.Drawing.Point(443, 114);
             this.selectTableBox.Name = "selectTableBox";
             this.selectTableBox.Size = new System.Drawing.Size(121, 21);
             this.selectTableBox.TabIndex = 26;
             this.selectTableBox.SelectedIndexChanged += new System.EventHandler(this.selectTableBox_SelectedIndexChanged);
+            // 
+            // TableType
+            // 
+            this.TableType.AutoSize = true;
+            this.TableType.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.TableType.Location = new System.Drawing.Point(440, 94);
+            this.TableType.Name = "TableType";
+            this.TableType.Size = new System.Drawing.Size(94, 17);
+            this.TableType.TabIndex = 27;
+            this.TableType.Text = "Тип таблицы";
             // 
             // MainForm
             // 
@@ -425,6 +438,7 @@ namespace SensorReading
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.ClientSize = new System.Drawing.Size(800, 552);
+            this.Controls.Add(this.TableType);
             this.Controls.Add(this.selectTableBox);
             this.Controls.Add(this.ClearButton);
             this.Controls.Add(this.SaveDataToFile);
@@ -494,5 +508,6 @@ namespace SensorReading
         private System.Windows.Forms.Button OpenFormFull;
         private System.Windows.Forms.Button ClearButton;
         private System.Windows.Forms.ComboBox selectTableBox;
+        private System.Windows.Forms.Label TableType;
     }
 }

@@ -31,34 +31,34 @@ namespace SensorReading
         {
             { 0 , "№"},
             { 1 , "Время" },
-            { 2 , " RM3100 магнит X" },
-            { 3 , " RM3100 магнит Y" },
-            { 4 , " RM3100 магнит Z" },
+            { 2 , " RM3100 Магнитометр X" },
+            { 3 , " RM3100 Магнитометр Y" },
+            { 4 , " RM3100 Магнитометр Z" },
             { 5 , " MTI temp" },
-            { 6 , " MTI магнит X" },
-            { 7 , " MTI магнит Y" },
-            { 8 , " MTI магнит Z" },
-            { 9 , " MTI акс X" },
-            { 10 , " MTI акс Y" },
-            { 11 , " MTI акс Z" },
+            { 6 , " MTI Магнитометр X" },
+            { 7 , " MTI Магнитометр Y" },
+            { 8 , " MTI Магнитометр Z" },
+            { 9 , " MTI Акселерометр X" },
+            { 10 , " MTI Акселерометр Y" },
+            { 11 , " MTI Акселерометр Z" },
             { 12 , " PNI (Курс)" },
             { 13 , " PNI (Тангаж)" },
             { 14 , " PNI (Крен)" },
-            { 15 , " PNI акс X" },
-            { 16 , " PNI акс Y" },
-            { 17 , " PNI акс Z" },
-            { 18 , " PNI магнит X" },
-            { 19 , " PNI магнит Y" },
-            { 20 , " PNI магнит Z" },
-            { 21 , " ADIS акс X" },
-            { 22 , " ADIS акс Y" },
-            { 23 , " ADIS акс Z" },
-            { 24 , " ADIS магнит X" },
-            { 25 , " ADIS магнит Y" },
-            { 26 , " ADIS магнит Z" },
-            { 27 , " ADIS гироскоп X" },
-            { 28 , " ADIS гироскоп Y" },
-            { 29 , " ADIS гироскоп Z" },
+            { 15 , " PNI Акселерометр X" },
+            { 16 , " PNI Акселерометр Y" },
+            { 17 , " PNI Акселерометр Z" },
+            { 18 , " PNI Магнитометр X" },
+            { 19 , " PNI Магнитометр Y" },
+            { 20 , " PNI Магнитометр Z" },
+            { 21 , " ADIS Акселерометр X" },
+            { 22 , " ADIS Акселерометр Y" },
+            { 23 , " ADIS Акселерометр Z" },
+            { 24 , " ADIS Магнитометр X" },
+            { 25 , " ADIS Магнитометр Y" },
+            { 26 , " ADIS Магнитометр Z" },
+            { 27 , " ADIS Гироскоп X" },
+            { 28 , " ADIS Гироскоп Y" },
+            { 29 , " ADIS Гироскоп Z" },
             { 30 , " ADIS temp" },
             { 31 , " RM3100 MAz" },
             { 32 , " MTI MAz" },
@@ -70,8 +70,10 @@ namespace SensorReading
         int[] allColumns = new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
         Dictionary<string, int[]> tableTemplates = new Dictionary<string, int[]>
         {
-            {"Все данные", new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 } }, //allColumns
-            {"Магнитные азимуты", new int[]{ 0, 1, 31, 32, 33, 34 } }  //Mag Azimuth
+            {"Все данные", new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 } }, //Все колонки
+            {"Магнитные азимуты", new int[]{ 0, 1, 31, 32, 33, 34 } },  //Магнитные азимуты
+            {"Акселерометры", new int[]{ 0, 1, 9, 10, 11, 15, 16, 17, 21, 22, 23} }, //Акселерометры
+            {"Магнитометры", new int[] { 0, 1, 2, 3, 4, 6, 7, 8, 18, 19, 20, 24, 25, 26} } //Магнитометры
         };
         public MainForm()
         {
@@ -128,10 +130,6 @@ namespace SensorReading
                 }
 
                 templatesData[templateName].Add(rowData);
-            }
-            foreach (DataGridViewRow row in SensorGridView.Rows)
-            {
-
             }
         }
         private void LoadGridViewData(string templateName)
@@ -265,11 +263,11 @@ namespace SensorReading
             SensorGridView.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             for (int col = 0; col < SensorGridView.Columns.Count; col++)
             {
-                SensorGridView.Columns[col].Width = 70;
-                SensorGridView.Columns[col].Width = 70;
+                SensorGridView.Columns[col].Width = 115;
             }
-            SensorGridView.Columns[0].Width = 80;
-            SensorGridView.Columns[0].Width = 80;
+            SensorGridView.Columns[0].Width = 70;
+            SensorGridView.Columns[1].Width = 80;
+
             int totalwidth = SensorGridView.RowHeadersWidth + 1;
 
             for (int i = 0; i < SensorGridView.Columns.Count; i++)
@@ -785,8 +783,10 @@ namespace SensorReading
 
         private void GoFullscreen(bool fullscreen)
         {
-            int monitorWid = Screen.PrimaryScreen.Bounds.Width;
-            int monitorHei = Screen.PrimaryScreen.Bounds.Height;
+            Screen currentScreen = Screen.FromControl(this);
+
+            int monitorWid = currentScreen.Bounds.Width;
+            int monitorHei = currentScreen.Bounds.Height;
 
             //Установка состояния окна и изменение ширины панели
             this.WindowState = fullscreen ? FormWindowState.Normal : FormWindowState.Maximized;
