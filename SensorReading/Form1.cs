@@ -67,7 +67,7 @@ namespace SensorReading
         Dictionary<string, int[]> tableTemplates = new Dictionary<string, int[]>
         {
             {"Все данные", new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 } }, //allColumns
-            {"Магнитные азимуты", new int[]{ 0, 1, 31,32,33,34 } }  //Mag Azimuth
+            {"Магнитные азимуты", new int[]{ 0, 1, 31, 32, 33, 34 } }  //Mag Azimuth
         };
         public MainForm()
         {
@@ -454,16 +454,14 @@ namespace SensorReading
                             azimuthADIS -= 360;
                         }
                         string selectedTemplate = selectTableBox.SelectedItem.ToString();
-                        results.Add(azimuthRM3100.ToString());
-                        results.Add(azimuthPNI.ToString());
-                        results.Add(azimuthMTI.ToString());
-                        results.Add(azimuthADIS.ToString());
+                        results.Add(azimuthRM3100.ToString().Replace(',', '.'));
+                        results.Add(azimuthPNI.ToString().Replace(',', '.'));
+                        results.Add(azimuthMTI.ToString().Replace(',', '.'));
+                        results.Add(azimuthADIS.ToString().Replace(',', '.'));
 
                         WriteGridView(results, selectedTemplate, rowIndex);
                     }));
                 }
-
-                //await Task.Delay(int.Parse(dataPeriod));
             }
         }
 
@@ -867,6 +865,24 @@ namespace SensorReading
                     m.Show(SensorGridView, new Point(e.X, e.Y));
                 }
             }
+        }
+
+        private void selectTableBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string selectedTemplate = selectTableBox.SelectedItem.ToString();
+            if (!tableTemplates.TryGetValue(selectedTemplate, out int[] template))
+            {
+                return; // Если шаблон не найден, прерываем выполнение
+            }
+            LoadDataIntoGridView(tableTemplates[$"{selectedTemplate}"]);
+
+            if (selectedTemplate == "Магнитные азимуты")
+            {
+                SensorGridView.Rows.RemoveAt(1);
+                SensorGridView.Rows.Insert(2, 1);
+            }
+
+            RepairDataInGridView();
         }
     }
 }

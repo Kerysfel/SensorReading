@@ -417,6 +417,7 @@ namespace SensorReading
             this.selectTableBox.Name = "selectTableBox";
             this.selectTableBox.Size = new System.Drawing.Size(121, 21);
             this.selectTableBox.TabIndex = 26;
+            this.selectTableBox.SelectedIndexChanged += new System.EventHandler(this.selectTableBox_SelectedIndexChanged);
             // 
             // MainForm
             // 
