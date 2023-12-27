@@ -95,13 +95,10 @@ namespace SensorReading
             ConnectRedMini.Hide();
             ConnectRedMini.BackColor = Color.Maroon;
 
-            int i = 0;
-            foreach (string s in SerialPort.GetPortNames())
-            {
-                ComConnectorsList.Items.Insert(i, s);
-                i++;
-            }
+            UpdateComPortsList();
+
             MergeHeaderGrid();
+
             SetRoundedShape(ConnectGrin, 27);
             SetRoundedShape(ConnectYellow, 27);
             SetRoundedShape(ConnectRed, 27);
@@ -109,6 +106,14 @@ namespace SensorReading
             SetRoundedShape(ConnectYellowMini, 22);
             SetRoundedShape(ConnectRedMini, 22);
             SensorGridView.ClearSelection();
+        }
+        private void UpdateComPortsList()
+        {
+            ComConnectorsList.Items.Clear();
+            foreach (string s in SerialPort.GetPortNames())
+            {
+                ComConnectorsList.Items.Add(s);
+            }
         }
         private void SaveCurrentGridViewData(string templateName)
         {
@@ -265,7 +270,7 @@ namespace SensorReading
             {
                 SensorGridView.Columns[col].Width = 115;
             }
-            SensorGridView.Columns[0].Width = 70;
+            SensorGridView.Columns[0].Width = 50;
             SensorGridView.Columns[1].Width = 80;
 
             int totalwidth = SensorGridView.RowHeadersWidth + 1;
@@ -927,6 +932,11 @@ namespace SensorReading
             LoadGridViewData(selectedTemplate);
             RepairDataInGridView();
             lastName = selectedTemplate;
+        }
+
+        private void label1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            UpdateComPortsList();
         }
     }
 }

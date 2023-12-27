@@ -30,7 +30,7 @@ namespace SensorReading
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.panel1 = new System.Windows.Forms.Panel();
             this.OpenFormFull = new System.Windows.Forms.Button();
             this.ConnectRedMini = new System.Windows.Forms.Panel();
@@ -310,12 +310,12 @@ namespace SensorReading
             this.SensorGridView.Location = new System.Drawing.Point(16, 223);
             this.SensorGridView.Name = "SensorGridView";
             this.SensorGridView.RowHeadersVisible = false;
-            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Menu;
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle4.ForeColor = System.Drawing.Color.Black;
-            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.Color.LightSteelBlue;
-            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.Color.White;
-            this.SensorGridView.RowsDefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Menu;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.Color.Black;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.Color.LightSteelBlue;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.Color.White;
+            this.SensorGridView.RowsDefaultCellStyle = dataGridViewCellStyle1;
             this.SensorGridView.Size = new System.Drawing.Size(772, 317);
             this.SensorGridView.TabIndex = 13;
             this.SensorGridView.CellPainting += new System.Windows.Forms.DataGridViewCellPaintingEventHandler(this.SensorGridView_CellPainting_1);
@@ -371,6 +371,7 @@ namespace SensorReading
             this.label1.Size = new System.Drawing.Size(85, 17);
             this.label1.TabIndex = 18;
             this.label1.Text = "COM-порты";
+            this.label1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.label1_MouseDoubleClick);
             // 
             // label2
             // 
