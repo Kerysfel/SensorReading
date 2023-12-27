@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO.Ports;
 using System.Globalization;
-using ClosedXML.Excel;
 using System.Reflection;
 using System.Collections.Generic;
 
@@ -75,6 +74,82 @@ namespace SensorReading
             {"Акселерометры", new int[]{ 0, 1, 9, 10, 11, 15, 16, 17, 21, 22, 23} }, //Акселерометры
             {"Магнитометры", new int[] { 0, 1, 2, 3, 4, 6, 7, 8, 18, 19, 20, 24, 25, 26} } //Магнитометры
         };
+        public class MadgwickFilter
+        {
+            // Кватернионы ориентации
+            private float q1 = 1f, q2 = 0f, q3 = 0f, q4 = 0f;
+
+            // Коэффициент фильтра
+            public float Beta { get; set; } = 0.1f;
+
+            // Обновление фильтра с использованием данных гироскопа и акселерометра
+            public (float Roll, float Pitch, float Yaw) Update(float gx, float gy, float gz, float ax, float ay, float az, int dataPeriod)
+            {
+                float sampleFreq = 1000f / dataPeriod; // Частота в Гц, рассчитанная из периода накопления данных в мс
+                float recipNorm;
+                float s1, s2, s3, s4;
+                float qDot1, qDot2, qDot3, qDot4;
+
+                // Нормализация данных акселерометра
+                recipNorm = (float)Math.Sqrt(ax * ax + ay * ay + az * az);
+                ax /= recipNorm;
+                ay /= recipNorm;
+                az /= recipNorm;
+
+                // Промежуточные значения для угловой скорости гироскопа
+                qDot1 = 0.5f * (-q2 * gx - q3 * gy - q4 * gz);
+                qDot2 = 0.5f * (q1 * gx + q3 * gz - q4 * gy);
+                qDot3 = 0.5f * (q1 * gy - q2 * gz + q4 * gx);
+                qDot4 = 0.5f * (q1 * gz + q2 * gy - q3 * gx);
+
+                // Градиент для коррекции ошибки
+                s1 = 2f * (q1 * q3 - q2 * q4) - ax;
+                s2 = 2f * (q1 * q2 + q3 * q4) - ay;
+                s3 = 1f - 2f * (q2 * q2 + q3 * q3) - az;
+                s4 = q2 * q3 - q1 * q4;
+
+                // Нормализация градиента для предотвращения деления на ноль
+                recipNorm = (float)Math.Sqrt(s1 * s1 + s2 * s2 + s3 * s3 + s4 * s4);
+                s1 /= recipNorm;
+                s2 /= recipNorm;
+                s3 /= recipNorm;
+                s4 /= recipNorm;
+
+                // Применение градиента к скоростям изменения кватернионов
+                qDot1 -= Beta * s1;
+                qDot2 -= Beta * s2;
+                qDot3 -= Beta * s3;
+                qDot4 -= Beta * s4;
+
+                // Интегрирование для получения новых кватернионов
+                q1 += qDot1 * (1.0f / sampleFreq);
+                q2 += qDot2 * (1.0f / sampleFreq);
+                q3 += qDot3 * (1.0f / sampleFreq);
+                q4 += qDot4 * (1.0f / sampleFreq);
+
+                // Нормализация кватернионов
+                recipNorm = (float)Math.Sqrt(q1 * q1 + q2 * q2 + q3 * q3 + q4 * q4);
+                q1 /= recipNorm;
+                q2 /= recipNorm;
+                q3 /= recipNorm;
+                q4 /= recipNorm;
+
+                return ConvertQuaternionToEuler();
+            }
+
+            // Аналогично реализуйте другие перегруженные версии метода Update
+
+            private (float Roll, float Pitch, float Yaw) ConvertQuaternionToEuler()
+            {
+                // Расчет углов Эйлера из кватернионов
+                float roll = (float)Math.Atan2(2f * (q1 * q2 + q3 * q4), 1 - 2f * (q2 * q2 + q3 * q3));
+                float pitch = (float)Math.Asin(2f * (q1 * q3 - q4 * q2));
+                float yaw = (float)Math.Atan2(2f * (q1 * q4 + q2 * q3), 1 - 2f * (q3 * q3 + q4 * q4));
+
+                return (roll * 180.0f / (float)Math.PI, pitch * 180.0f / (float)Math.PI, yaw * 180.0f / (float)Math.PI);
+            }
+        }
+
         public MainForm()
         {
             InitializeComponent();
@@ -503,6 +578,20 @@ namespace SensorReading
                         results.Add(azimuthMTI.ToString().Replace(',', '.'));
                         results.Add(azimuthADIS.ToString().Replace(',', '.'));
 
+                        MadgwickFilter mgF = new MadgwickFilter();
+
+                        float gx = float.Parse(results[21], CultureInfo.InvariantCulture);
+                        float gy = float.Parse(results[22], CultureInfo.InvariantCulture);
+                        float gz = float.Parse(results[23], CultureInfo.InvariantCulture);
+                        float ax = float.Parse(results[27], CultureInfo.InvariantCulture);
+                        float ay = float.Parse(results[28], CultureInfo.InvariantCulture);
+                        float az = float.Parse(results[29], CultureInfo.InvariantCulture);
+                        var eulerAngles = mgF.Update( gx, gy, gz, ax, ay, az, int.Parse(dataPeriod));
+
+                        (float roll, float pitch, float yaw) = eulerAngles;
+                        results.Add(roll.ToString());
+                        results.Add(pitch.ToString());
+                        results.Add(yaw.ToString());
                         WriteGridView(results, selectedTemplate, rowIndex);
                     }));
                 }
