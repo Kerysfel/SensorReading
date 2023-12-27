@@ -62,7 +62,10 @@ namespace SensorReading
             { 31 , " RM3100 MAz" },
             { 32 , " MTI MAz" },
             { 33 , " PNI MAz" },
-            { 34 , " ADIS MAz" }
+            { 34 , " ADIS MAz" },
+            { 35 , " ADIS (Курс)" },
+            { 36 , " ADIS (Тангаж)" },
+            { 37 , " ADIS (Крен)" }
         };
 
         //Шаблоны таблиц
@@ -72,7 +75,8 @@ namespace SensorReading
             {"Все данные", new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 } }, //Все колонки
             {"Магнитные азимуты", new int[]{ 0, 1, 31, 32, 33, 34 } },  //Магнитные азимуты
             {"Акселерометры", new int[]{ 0, 1, 9, 10, 11, 15, 16, 17, 21, 22, 23} }, //Акселерометры
-            {"Магнитометры", new int[] { 0, 1, 2, 3, 4, 6, 7, 8, 18, 19, 20, 24, 25, 26} } //Магнитометры
+            {"Магнитометры", new int[] { 0, 1, 2, 3, 4, 6, 7, 8, 18, 19, 20, 24, 25, 26} }, //Магнитометры
+            {"Круги Эйлера", new int[] {0, 1, 12, 13, 14, 35, 36, 37} } //Курс, Крен, Тангаж
         };
         public class MadgwickFilter
         {
@@ -464,7 +468,17 @@ namespace SensorReading
             }
             return azimuth;
         }
-
+        // Акселерометр - Крен Тангаж
+        // Магнитометр - Магнитный азимут
+       
+        private (double roll, double pitch, double yaw) AccMagCounting(double X, double Y, double Z, double mx, double my)
+        {
+            double roll = Math.Atan(Y / Z) * 180 / Math.PI -90;
+            double pitch = -Math.Atan(-X / Math.Sqrt(Y * Y + Z * Z)) * 180 / Math.PI;
+            double yaw = Math.Atan2(my , mx) * 180 / Math.PI+90;
+            
+            return (roll, pitch, yaw);
+        }
         private async void StartDataReading()
         {
             while (isReadingData) //метка для остановки чтения
@@ -531,19 +545,23 @@ namespace SensorReading
 
                         MadgwickFilter mgF = new MadgwickFilter();
 
-                        float gx = float.Parse(results[21], CultureInfo.InvariantCulture);
-                        float gy = float.Parse(results[22], CultureInfo.InvariantCulture);
-                        float gz = float.Parse(results[23], CultureInfo.InvariantCulture);
-                        float ax = float.Parse(results[27], CultureInfo.InvariantCulture);
-                        float ay = float.Parse(results[28], CultureInfo.InvariantCulture);
-                        float az = float.Parse(results[29], CultureInfo.InvariantCulture);
+                        float ax = float.Parse(results[21], CultureInfo.InvariantCulture);
+                        float ay = float.Parse(results[22], CultureInfo.InvariantCulture);
+                        float az = float.Parse(results[23], CultureInfo.InvariantCulture);
+                        float gx = float.Parse(results[27], CultureInfo.InvariantCulture);
+                        float gy = float.Parse(results[28], CultureInfo.InvariantCulture);
+                        float gz = float.Parse(results[29], CultureInfo.InvariantCulture);
                         var eulerAngles = mgF.Update( gx, gy, gz, ax, ay, az, int.Parse(dataPeriod));
 
                         (float roll, float pitch, float yaw) = eulerAngles;
-                        results.Add(roll.ToString());
-                        results.Add(pitch.ToString());
-                        results.Add(yaw.ToString());
+                        //results.Add(roll.ToString());
+                        //results.Add(pitch.ToString());
+                        //results.Add(yaw.ToString());
 
+                        (double r, double p, double y) = AccMagCounting(ax, ay, az, double.Parse(results[24], CultureInfo.InvariantCulture), double.Parse(results[25], CultureInfo.InvariantCulture));
+                        results.Add(y.ToString().Replace(',','.'));
+                        results.Add(p.ToString().Replace(',', '.'));
+                        results.Add(r.ToString().Replace(',', '.'));
                         string selectedTemplate = selectTableBox.SelectedItem.ToString();
                         WriteGridView(results, selectedTemplate, rowIndex);
                     }));
