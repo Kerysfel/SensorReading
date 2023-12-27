@@ -446,6 +446,25 @@ namespace SensorReading
                 }
             }
         }
+
+        private double MagAz(double Pitch, double Roll, double X, double Y, double Z)
+        {
+            // Расчет магнитного азимута
+            double azimuth = Math.Atan2(Z * Math.Sin(Roll) - Y * Math.Cos(Roll), X * Math.Cos(Pitch) + Y * Math.Sin(Pitch) * Math.Sin(Roll) + Z * Math.Sin(Pitch) * Math.Cos(Roll));
+            // Преобразование из радиан в градусы
+            azimuth *= 180 / Math.PI;
+            //Корректировка ортогональных преобразований
+            if (azimuth < 0)
+            {
+                azimuth += 360;
+            }
+            else if (azimuth >= 360)
+            {
+                azimuth -= 360;
+            }
+            return azimuth;
+        }
+
         private async void StartDataReading()
         {
             while (isReadingData) //метка для остановки чтения
@@ -460,7 +479,9 @@ namespace SensorReading
                 string response = await Task.Run(() => SendAndReadData(dataPeriod));
 
                 if (!string.IsNullOrEmpty(response))
-                {
+                {//Excel -atan2(x;y) C# -atan2(y;x)
+                 //X - X * COS(Pitch) + Y * SIN(Pitch) * SIN(Roll) + Z * SIN(Pitch) * COS(Roll)
+                 //Y - Z * SIN(Roll) - Y * COS(Roll)
                     List<string> results = new List<string>(response.Split(';'));
                     int len = SensorGridView.Rows.Count;
                     //Обновляем SensorGridView в основном потоке
@@ -469,23 +490,13 @@ namespace SensorReading
                         int rowIndex = 3;
                         SensorGridView.Rows.Insert(rowIndex,1);
                         SensorGridView.Rows[rowIndex].Cells[0].Value = len-3;
-                        string hours = $"{int.Parse(results[0], CultureInfo.InvariantCulture) / 1000 / 60 / 60}";
-                        string minutes = $"{int.Parse(results[0], CultureInfo.InvariantCulture) / 1000 / 60 % 60}";
-                        string seconds = $"{int.Parse(results[0], CultureInfo.InvariantCulture) / 1000 % 60}";
-                        if (seconds.Length < 2)
-                        {
-                            seconds = "0" + seconds;
-                        }
-                        if (minutes.Length < 2)
-                        {
-                            minutes = "0" + minutes;
-                        }
-                        if (hours.Length < 2)
-                        {
-                            hours = "0" + hours;
-                        }
-                        string times = $"{hours}:{minutes}:{seconds}";
-                        SensorGridView.Rows[rowIndex].Cells[1].Value = times;
+                        int totalTimeInSeconds = int.Parse(results[0], CultureInfo.InvariantCulture) / 1000;
+                        // Преобразование общего времени в секундах в часы, минуты и секунды
+                        TimeSpan timeSpan = TimeSpan.FromSeconds(totalTimeInSeconds);
+                        // Форматирование времени в формате "HH:mm:ss"
+                        string formattedTime = timeSpan.ToString(@"hh\:mm\:ss");
+                        SensorGridView.Rows[rowIndex].Cells[1].Value = formattedTime;
+
                         //Общие значения (Не трогать)
                         double Pitch = Math.Round(double.Parse(results[12], CultureInfo.InvariantCulture), 2) * Math.PI / 180;// значение Тангажа (например, G3);
                         double Roll = Math.Round(double.Parse(results[13], CultureInfo.InvariantCulture), 2) * Math.PI / 180;// значение Крена (например, H3);
@@ -495,84 +506,24 @@ namespace SensorReading
                         double Y = Math.Round(double.Parse(results[2], CultureInfo.InvariantCulture), 2);// значение Y (например, C3);
                         double Z = Math.Round(double.Parse(results[3], CultureInfo.InvariantCulture), 2);// значение Z (например, D3);
                         //Для PNI
-                        double XPNITEMP = Math.Round(double.Parse(results[17], CultureInfo.InvariantCulture), 2);//
-                        double YPNITEMP = Math.Round(double.Parse(results[18], CultureInfo.InvariantCulture), 2);//
-                        double ZPNITEMP = Math.Round(double.Parse(results[19], CultureInfo.InvariantCulture), 2);//
+                        double YPNI = Math.Round(double.Parse(results[17], CultureInfo.InvariantCulture), 2);//
+                        double XPNI = -Math.Round(double.Parse(results[18], CultureInfo.InvariantCulture), 2);//
+                        double ZPNI = Math.Round(double.Parse(results[19], CultureInfo.InvariantCulture), 2);//
                         //Для ADIS
-                        double XADISTEMP = Math.Round(double.Parse(results[23], CultureInfo.InvariantCulture), 2);
-                        double YADISTEMP = Math.Round(double.Parse(results[24], CultureInfo.InvariantCulture), 2);
-                        double ZADISTEMP = Math.Round(double.Parse(results[25], CultureInfo.InvariantCulture), 2);
+                        double YADIS = Math.Round(double.Parse(results[23], CultureInfo.InvariantCulture), 2);
+                        double XADIS = Math.Round(double.Parse(results[24], CultureInfo.InvariantCulture), 2);
+                        double ZADIS = -Math.Round(double.Parse(results[25], CultureInfo.InvariantCulture), 2);
                         //Для MTI
-                        double XMTITEMP = Math.Round(double.Parse(results[5], CultureInfo.InvariantCulture), 2);
-                        double YMTITEMP = Math.Round(double.Parse(results[6], CultureInfo.InvariantCulture), 2);
-                        double ZMTITEMP = Math.Round(double.Parse(results[7], CultureInfo.InvariantCulture), 2);
-
-                        //Таблицы переходов
-                        //PNI
-                        double XPNI = -YPNITEMP;
-                        double YPNI = XPNITEMP;
-                        double ZPNI = ZPNITEMP;
-                        //MTI
-                        double XMTI = YMTITEMP;
-                        double YMTI = XMTITEMP;
-                        double ZMTI = -ZMTITEMP;
-                        //ADIS
-                        double XADIS = YADISTEMP;
-                        double YADIS = XADISTEMP;
-                        double ZADIS = -ZADISTEMP;
-
-                        //Excel -atan2(x;y) C# -atan2(y;x)
-                        //X - X * COS(Pitch) + Y * SIN(Pitch) * SIN(Roll) + Z * SIN(Pitch) * COS(Roll)
-                        //Y - Z * SIN(Roll) - Y * COS(Roll)
+                        double YMTI = Math.Round(double.Parse(results[5], CultureInfo.InvariantCulture), 2);
+                        double XMTI = Math.Round(double.Parse(results[6], CultureInfo.InvariantCulture), 2);
+                        double ZMTI = -Math.Round(double.Parse(results[7], CultureInfo.InvariantCulture), 2);
 
                         // Расчет магнитного азимута
-                        double azimuthRM3100 = Math.Atan2(Z * Math.Sin(Roll) - Y * Math.Cos(Roll), X * Math.Cos(Pitch) + Y * Math.Sin(Pitch) * Math.Sin(Roll) + Z * Math.Sin(Pitch) * Math.Cos(Roll));
-                        double azimuthPNI = Math.Atan2(ZPNI * Math.Sin(Roll) - YPNI * Math.Cos(Roll), XPNI * Math.Cos(Pitch) + YPNI * Math.Sin(Pitch) * Math.Sin(Roll) + ZPNI * Math.Sin(Pitch) * Math.Cos(Roll));
-                        double azimuthMTI = Math.Atan2(ZMTI * Math.Sin(Roll) - YMTI * Math.Cos(Roll), XMTI * Math.Cos(Pitch) + YMTI * Math.Sin(Pitch) * Math.Sin(Roll) + ZMTI * Math.Sin(Pitch) * Math.Cos(Roll));
-                        double azimuthADIS = Math.Atan2(ZADIS * Math.Sin(Roll) - YADIS * Math.Cos(Roll), XADIS * Math.Cos(Pitch) + YADIS * Math.Sin(Pitch) * Math.Sin(Roll) + ZADIS * Math.Sin(Pitch) * Math.Cos(Roll));
+                        double azimuthRM3100 = MagAz(Pitch, Roll, X, Y, Z);
+                        double azimuthPNI = MagAz(Pitch, Roll, XPNI, YPNI, ZPNI);
+                        double azimuthMTI = MagAz(Pitch, Roll, XMTI, YMTI, ZMTI);
+                        double azimuthADIS = MagAz(Pitch, Roll, XADIS, YADIS, ZADIS);
 
-                        // Преобразование из радиан в градусы
-                        azimuthRM3100 *= 180 / Math.PI;
-                        azimuthPNI *= 180 / Math.PI;
-                        azimuthMTI *= 180 / Math.PI;
-                        azimuthADIS *= 180 / Math.PI;
-
-                        //Корректировки для ортогональных преобразований
-                        if (azimuthRM3100 < 0)
-                        {
-                            azimuthRM3100 += 360;
-                        } else if (azimuthRM3100 >= 360)
-                        {
-                            azimuthRM3100 -= 360;
-                        }
-
-                        if (azimuthPNI < 0)
-                        {
-                            azimuthPNI += 360;
-                        }
-                        else if (azimuthPNI >= 360)
-                        {
-                            azimuthPNI -= 360;
-                        }
-
-                        if (azimuthMTI < 0)
-                        {
-                            azimuthMTI += 360;
-                        }
-                        else if (azimuthMTI >= 360)
-                        {
-                            azimuthMTI -= 360;
-                        }
-
-                        if (azimuthADIS < 0)
-                        {
-                            azimuthADIS += 360;
-                        }
-                        else if (azimuthADIS >= 360)
-                        {
-                            azimuthADIS -= 360;
-                        }
-                        string selectedTemplate = selectTableBox.SelectedItem.ToString();
                         results.Add(azimuthRM3100.ToString().Replace(',', '.'));
                         results.Add(azimuthPNI.ToString().Replace(',', '.'));
                         results.Add(azimuthMTI.ToString().Replace(',', '.'));
@@ -592,6 +543,8 @@ namespace SensorReading
                         results.Add(roll.ToString());
                         results.Add(pitch.ToString());
                         results.Add(yaw.ToString());
+
+                        string selectedTemplate = selectTableBox.SelectedItem.ToString();
                         WriteGridView(results, selectedTemplate, rowIndex);
                     }));
                 }
