@@ -629,121 +629,105 @@ namespace SensorReading
                 }
             }
         }
-
+        private bool IsListBoxSelectionValid(ListBox listBox, string errorMessage)
+        {
+            if (listBox.SelectedIndex == -1)
+            {
+                MessageBox.Show(errorMessage, "Выбор не сделан", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+            return true;
+        }
         private async void ConnectComPort_Click(object sender, EventArgs e)
         {
-            if (ComConnectorsList.SelectedIndex == -1)
+            if (!IsListBoxSelectionValid(ComConnectorsList, "Укажите COM-порт для чтения.") ||
+            !IsSelectionValid(DataPeriodBox, "Укажите период накопления данных."))
             {
-                MessageBox.Show("Укажите COM-порт для чтения.","COM-порт не указан", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            if (DataPeriodBox.SelectedIndex == -1)
-            {
-                MessageBox.Show("Укажите период накопления данных.", "Период накопления данных не указан", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+
             string selectedPortName = ComConnectorsList.SelectedItem.ToString();
-            string[] availablePorts = SerialPort.GetPortNames();
-            if (availablePorts.Contains(selectedPortName))
+            if (!SerialPort.GetPortNames().Contains(selectedPortName))
             {
-                try
+                ShowPortError(selectedPortName, true);
+                return;
+            }
+
+            _serialPort = new SerialPort
+            {
+                PortName = selectedPortName,
+                BaudRate = 115200,
+                DataBits = 8,
+                StopBits = StopBits.One,
+                Parity = Parity.None,
+                Handshake = Handshake.None,
+                ReadTimeout = 6000,
+                WriteTimeout = 6000
+            };
+
+            try
+            {
+                _serialPort.Open();
+                UpdateUIBasedOnPortStatus(_serialPort.IsOpen);
+                if (_serialPort.IsOpen)
                 {
-                    _serialPort = new SerialPort
-                    {
-                        PortName = selectedPortName,
-                        BaudRate = 115200,
-                        DataBits = 8,
-                        StopBits = StopBits.One,
-                        Parity = Parity.None,
-                        Handshake = Handshake.None,
-                        ReadTimeout = 6000,
-                        WriteTimeout = 6000
-                    };
-
-                    _serialPort.Open();
-
-                    if (_serialPort.IsOpen)
-                    {
-                        isReadingData = true;
-                        await Task.Run(() => StartDataReading());
-                        ConnectGrin.BackColor = Color.Lime; //Lime\DarkGreen
-                        ConnectGreenText.Font = new Font(ConnectGreenText.Font, FontStyle.Bold);
-                        ConnectGreenText.ForeColor = Color.Black;
-                        ConnectYellow.BackColor = Color.Olive; //Yellow\Olive
-                        ConnectYellowText.Font = new Font(ConnectYellowText.Font, FontStyle.Regular);
-                        ConnectYellowText.ForeColor = Color.Gray;
-                        ConnectRed.BackColor = Color.Maroon;
-                        ConnectRedText.ForeColor = Color.Gray;
-                        ConnectRedText.Font = new Font(ConnectRedText.Font, FontStyle.Regular);
-
-                        ConnectGrinMini.BackColor = Color.Lime;
-                        ConnectYellowMini.BackColor = Color.Olive;
-                        ConnectRedMini.BackColor = Color.Maroon;
-                    }
-                    else
-                    {
-                        MessageBox.Show("Не удалось открыть COM-порт. Пожалуйста, проверьте подключение.", "Ошибка подключения", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        ConnectGrin.BackColor = Color.DarkGreen; //Lime\DarkGreen
-                        ConnectGreenText.Font = new Font(ConnectGreenText.Font, FontStyle.Regular);
-                        ConnectGreenText.ForeColor = Color.Gray;
-                        ConnectYellow.BackColor = Color.Olive; //Yellow\Olive
-                        ConnectYellowText.Font = new Font(ConnectYellowText.Font, FontStyle.Regular);
-                        ConnectYellowText.ForeColor = Color.Gray;
-                        ConnectRed.BackColor = Color.Red; //Red\Maroon
-                        ConnectRedText.Font = new Font(ConnectRedText.Font, FontStyle.Bold);
-                        ConnectRedText.ForeColor = Color.Black;
-
-                        ConnectGrinMini.BackColor = Color.DarkGreen;
-                        ConnectYellowMini.BackColor = Color.Olive;
-                        ConnectRedMini.BackColor = Color.Red;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Произошла ошибка при подключении к COM-порту: {ex.Message}", "Ошибка подключения", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    ConnectGrin.BackColor = Color.DarkGreen; //Lime\DarkGreen
-                    ConnectGreenText.Font = new Font(ConnectGreenText.Font, FontStyle.Regular);
-                    ConnectGreenText.ForeColor = Color.Gray;
-                    ConnectYellow.BackColor = Color.Olive; //Yellow\Olive
-                    ConnectYellowText.Font = new Font(ConnectYellowText.Font, FontStyle.Regular);
-                    ConnectYellowText.ForeColor = Color.Gray;
-                    ConnectRed.BackColor = Color.Red; //Red\Maroon
-                    ConnectRedText.Font = new Font(ConnectRedText.Font, FontStyle.Bold);
-                    ConnectRedText.ForeColor = Color.Black;
-                    ConnectGrinMini.BackColor = Color.DarkGreen;
-                    ConnectYellowMini.BackColor = Color.Olive;
-                    ConnectRedMini.BackColor = Color.Red;
+                    isReadingData = true;
+                    await Task.Run(() => StartDataReading());
                 }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show($"Выбранный COM-порт '{selectedPortName}' не существует. Пожалуйста, выберите корректный порт.");
-                ConnectGrin.BackColor = Color.DarkGreen; //Lime\DarkGreen
-                ConnectGreenText.Font = new Font(ConnectGreenText.Font, FontStyle.Regular);
-                ConnectGreenText.ForeColor = Color.Gray;
-                ConnectYellow.BackColor = Color.Olive; //Yellow\Olive
-                ConnectYellowText.Font = new Font(ConnectYellowText.Font, FontStyle.Regular);
-                ConnectYellowText.ForeColor = Color.Gray;
-                ConnectRed.BackColor = Color.Red; //Red\Maroon
-                ConnectRedText.Font = new Font(ConnectRedText.Font, FontStyle.Bold);
-                ConnectRedText.ForeColor = Color.Black;
-                ConnectGrinMini.BackColor = Color.DarkGreen;
-                ConnectYellowMini.BackColor = Color.Olive;
-                ConnectRedMini.BackColor = Color.Red;
+                MessageBox.Show($"Произошла ошибка при подключении к COM-порту: {ex.Message}", "Ошибка подключения", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ShowPortError(selectedPortName, false);
             }
         }
-        public Image rotateImage(Image someImage, bool flag)
+
+        private bool IsSelectionValid(ComboBox comboBox, string errorMessage)
         {
-            if (flag == true)
+            if (comboBox.SelectedIndex == -1)
             {
-                someImage.RotateFlip(RotateFlipType.Rotate270FlipNone);
-                return someImage;
+                MessageBox.Show(errorMessage, "Выбор не сделан", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
             }
-            else
-            {
-                someImage.RotateFlip(RotateFlipType.Rotate90FlipNone);
-                return someImage;
-            }
+            return true;
+        }
+
+        private void ShowPortError(string portName, bool isNotExistError)
+        {
+            string message = isNotExistError ? $"Выбранный COM-порт '{portName}' не существует. Пожалуйста, выберите корректный порт." :
+            "Не удалось открыть COM-порт. Пожалуйста, проверьте подключение.";
+            MessageBox.Show(message, "Ошибка подключения", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            UpdateUIBasedOnPortStatus(false);
+        }
+
+        private void UpdateUIBasedOnPortStatus(bool isOpen)
+        {
+            // Обновление состояния для зеленого индикатора
+            ConnectGrin.BackColor = isOpen ? Color.Lime : Color.DarkGreen;
+            ConnectGreenText.Font = new Font(ConnectGreenText.Font, isOpen ? FontStyle.Bold : FontStyle.Regular);
+            ConnectGreenText.ForeColor = isOpen ? Color.Black : Color.Gray;
+
+            // Обновление состояния для зеленого индикатора
+            ConnectYellow.BackColor = isOpen ? Color.Olive : Color.Yellow;
+            ConnectYellowText.Font = new Font(ConnectYellowText.Font, isOpen ? FontStyle.Regular : FontStyle.Bold);
+            ConnectYellowText.ForeColor = isOpen ? Color.Black : Color.Gray;
+
+            // Обновление состояния для зеленого индикатора
+            ConnectRed.BackColor = isOpen ? Color.Maroon : Color.Red;
+            ConnectRedText.Font = new Font(ConnectRedText.Font, isOpen ? FontStyle.Regular : FontStyle.Bold);
+            ConnectRedText.ForeColor = isOpen ? Color.Black : Color.Gray;
+
+            // Обновление состояния для зеленого индикатора
+            ConnectGrinMini.BackColor = isOpen ? Color.Lime : Color.DarkGreen;
+            ConnectYellowMini.BackColor = isOpen ? Color.Olive : Color.Yellow;
+            ConnectRedMini.BackColor = isOpen ? Color.Maroon : Color.Red;
+        }
+
+        public Image RotateImage(Image someImage, bool flag)
+        {
+            RotateFlipType rotateType = flag ? RotateFlipType.Rotate270FlipNone : RotateFlipType.Rotate90FlipNone;
+            someImage.RotateFlip(rotateType);
+            return someImage;
         }
         private void ToggleVisibility(bool status)
         {
@@ -778,7 +762,7 @@ namespace SensorReading
         {
             Image someImage;
             someImage = StatusListing.Image;
-            StatusListing.Image = rotateImage(someImage, statusFlag);
+            StatusListing.Image = RotateImage(someImage, statusFlag);
             ToggleVisibility(statusFlag);
             statusFlag = statusFlag ? false : true;
         }
