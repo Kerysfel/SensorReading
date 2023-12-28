@@ -408,33 +408,24 @@ namespace SensorReading
         private void panel1_MouseDown(object sender, MouseEventArgs e)
         {
             panel1.Capture = false;
-            Message m = Message.Create(base.Handle, 0xa1, new IntPtr(2), IntPtr.Zero);
-            this.WndProc(ref m);
+            Message m = Message.Create(Handle, 0xa1, new IntPtr(2), IntPtr.Zero);
+            WndProc(ref m);
         }
 
         private string SendAndReadData(string dataPeriod)
         {
+            if (!_serialPort.IsOpen) return null;
+
             try
             {
-                if (_serialPort.IsOpen)
+                _serialPort.Write(dataPeriod);
+                try
                 {
-                    //отправляем данные на плату
-                    _serialPort.Write(dataPeriod);
-                    //читаем ответ
-                    string answer = "";
-                    try
-                    {
-                        answer = _serialPort.ReadLine();
-                    }
-                    catch (TimeoutException e)
-                    {
-                        Console.WriteLine($"Данные с датчика не поступают: {e.Message}");
-                    }
-                    return answer;
+                    return _serialPort.ReadLine();
                 }
-                else
+                catch (TimeoutException e)
                 {
-                    //COM-порт не открыт
+                    Console.WriteLine($"Данные с датчика не поступают: {e.Message}");
                     return null;
                 }
             }
@@ -444,19 +435,17 @@ namespace SensorReading
                 return null;
             }
         }
+
         public void WriteGridView(List<string> results, string selectedTemplate, int rowIndex)
         {
-            if (!tableTemplates.TryGetValue(selectedTemplate, out int[] template))
+            if (!tableTemplates.TryGetValue(selectedTemplate, out int[] template)) return;
+
+            int maxIndex = Math.Min(template.Length, results.Count);
+            for (int i = 2; i < maxIndex; i++)
             {
-                return; // Если шаблон не найден, прерываем выполнение
-            }
-            for (int i = 2; i < template.Length && i < results.Count; i++)
-            {
-                int column = i;
-                double value;
-                if (double.TryParse(results[template[i]-1], NumberStyles.Any, CultureInfo.InvariantCulture, out value))
+                if (double.TryParse(results[template[i] - 1], NumberStyles.Any, CultureInfo.InvariantCulture, out double value))
                 {
-                    SensorGridView.Rows[rowIndex].Cells[column].Value = Math.Round(value, 2);
+                    SensorGridView.Rows[rowIndex].Cells[i].Value = Math.Round(value, 2);
                 }
             }
         }
