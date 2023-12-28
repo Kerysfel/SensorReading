@@ -473,11 +473,18 @@ namespace SensorReading
        
         private (double roll, double pitch, double yaw) AccMagCounting(double X, double Y, double Z, double mx, double my)
         {
-            double roll = Math.Atan(Y / Z) * 180 / Math.PI -90;
-            double pitch = -Math.Atan(-X / Math.Sqrt(Y * Y + Z * Z)) * 180 / Math.PI;
-            double yaw = Math.Atan2(my , mx) * 180 / Math.PI+90;
+            double toAngle = 180 / Math.PI;
+            double roll = Math.Atan(Y / Z) * toAngle;
+            double pitch = Math.Atan(-X / Math.Sqrt(Y * Y + Z * Z)) * toAngle;
+            double yaw = Math.Atan2(my , mx) * toAngle;
             
             return (roll, pitch, yaw);
+        }
+
+        private double GetData(string data)
+        {
+            double result = Math.Round(double.Parse(data, CultureInfo.InvariantCulture), 2);
+            return result;
         }
         private async void StartDataReading()
         {
@@ -512,37 +519,56 @@ namespace SensorReading
                         SensorGridView.Rows[rowIndex].Cells[1].Value = formattedTime;
 
                         //Общие значения (Не трогать)
-                        double Pitch = Math.Round(double.Parse(results[12], CultureInfo.InvariantCulture), 2) * Math.PI / 180;// значение Тангажа (например, G3);
-                        double Roll = Math.Round(double.Parse(results[13], CultureInfo.InvariantCulture), 2) * Math.PI / 180;// значение Крена (например, H3);
-
+                        double Pitch = GetData(results[12]) * Math.PI / 180;// значение Тангажа (например, G3);
+                        double Roll = GetData(results[13]) * Math.PI / 180;// значение Крена (например, H3);
+                                                                           //RM3100 2-4 Магнит
+                                                                           //MTI 6-8 магнит, 9-12 Акс
+                                                                           //PNI 12-14 Эйлер, 15-17 Акс, 18-20 Магнит
+                                                                           //ADIS 21-23 Акс, 24-26 Магнит, 27-29 Гиро
                         //Для RM3100
-                        double X = Math.Round(double.Parse(results[1], CultureInfo.InvariantCulture), 2);// значение X (например, B3);
-                        double Y = Math.Round(double.Parse(results[2], CultureInfo.InvariantCulture), 2);// значение Y (например, C3);
-                        double Z = Math.Round(double.Parse(results[3], CultureInfo.InvariantCulture), 2);// значение Z (например, D3);
-                        //Для PNI
-                        double YPNI = Math.Round(double.Parse(results[17], CultureInfo.InvariantCulture), 2);//
-                        double XPNI = -Math.Round(double.Parse(results[18], CultureInfo.InvariantCulture), 2);//
-                        double ZPNI = Math.Round(double.Parse(results[19], CultureInfo.InvariantCulture), 2);//
+                        double rm3100MagX = GetData(results[1]);// значение X (например, B3);
+                        double rm3100MagY = GetData(results[2]);// значение Y (например, C3);
+                        double rm3100MagZ = GetData(results[3]);// значение Z (например, D3);
+                        //Для PN
+                        double pniYaw = GetData(results[11]);
+                        double pniPitch = GetData(results[12]);
+                        double pniRoll = GetData(results[13]);
+                        double pniAcsY = GetData(results[14]);
+                        double pniAcsX = -GetData(results[15]);
+                        double pniAcsZ = GetData(results[16]);
+                        double pniMagY = GetData(results[17]);
+                        double pniMagX = -GetData(results[18]);
+                        double pniMagZ = GetData(results[19]);
                         //Для ADIS
-                        double YADIS = Math.Round(double.Parse(results[23], CultureInfo.InvariantCulture), 2);
-                        double XADIS = Math.Round(double.Parse(results[24], CultureInfo.InvariantCulture), 2);
-                        double ZADIS = -Math.Round(double.Parse(results[25], CultureInfo.InvariantCulture), 2);
+                        double adisAcsY = GetData(results[20]);
+                        double adisAcsX = GetData(results[21]);
+                        double adisAcsZ = -GetData(results[22]);
+                        double adisMagY = GetData(results[23]);
+                        double adisMagX = GetData(results[24]);
+                        double adisMagZ = -GetData(results[25]);
+                        double adisGiroY = GetData(results[26]);
+                        double adisGiroX = GetData(results[27]);
+                        double adisGiroZ = -GetData(results[28]);
                         //Для MTI
-                        double YMTI = Math.Round(double.Parse(results[5], CultureInfo.InvariantCulture), 2);
-                        double XMTI = Math.Round(double.Parse(results[6], CultureInfo.InvariantCulture), 2);
-                        double ZMTI = -Math.Round(double.Parse(results[7], CultureInfo.InvariantCulture), 2);
+                        double mtiMagY = GetData(results[5]);
+                        double mtiMagX = GetData(results[6]);
+                        double mtiMagZ = -GetData(results[7]);
+                        double mtiAcsY = GetData(results[8]);
+                        double mtiAcsX = GetData(results[9]);
+                        double mtiAcsZ = -GetData(results[10]);
 
                         // Расчет магнитного азимута
-                        double azimuthRM3100 = MagAz(Pitch, Roll, X, Y, Z);
-                        double azimuthPNI = MagAz(Pitch, Roll, XPNI, YPNI, ZPNI);
-                        double azimuthMTI = MagAz(Pitch, Roll, XMTI, YMTI, ZMTI);
-                        double azimuthADIS = MagAz(Pitch, Roll, XADIS, YADIS, ZADIS);
+                        double azimuthRM3100 = MagAz(Pitch, Roll, rm3100MagX, rm3100MagY, rm3100MagZ);
+                        double azimuthPNI = MagAz(Pitch, Roll, pniMagX, pniMagY, pniMagZ);
+                        double azimuthMTI = MagAz(Pitch, Roll, mtiMagX, mtiMagY, mtiMagZ);
+                        double azimuthADIS = MagAz(Pitch, Roll, adisMagX, adisMagY, adisMagZ);
 
                         results.Add(azimuthRM3100.ToString().Replace(',', '.'));
                         results.Add(azimuthPNI.ToString().Replace(',', '.'));
                         results.Add(azimuthMTI.ToString().Replace(',', '.'));
                         results.Add(azimuthADIS.ToString().Replace(',', '.'));
 
+                        //Маджвик
                         MadgwickFilter mgF = new MadgwickFilter();
 
                         float ax = float.Parse(results[21], CultureInfo.InvariantCulture);
@@ -558,6 +584,7 @@ namespace SensorReading
                         //results.Add(pitch.ToString());
                         //results.Add(yaw.ToString());
 
+                        // Эейлер из акселерометра и магнитометра
                         (double r, double p, double y) = AccMagCounting(ax, ay, az, double.Parse(results[24], CultureInfo.InvariantCulture), double.Parse(results[25], CultureInfo.InvariantCulture));
                         results.Add(y.ToString().Replace(',','.'));
                         results.Add(p.ToString().Replace(',', '.'));
@@ -924,10 +951,6 @@ namespace SensorReading
         private void SensorGridView_ColumnRemoved(object sender, DataGridViewColumnEventArgs e)
         {
             
-        }
-
-        private void MagAzimuth_CheckedChanged(object sender, EventArgs e)
-        {
         }
 
         private void SensorGridView_MouseClick(object sender, MouseEventArgs e)
