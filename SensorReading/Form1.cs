@@ -65,7 +65,16 @@ namespace SensorReading
             { 34 , " ADIS MAz" },
             { 35 , " ADIS (Курс)" },
             { 36 , " ADIS (Тангаж)" },
-            { 37 , " ADIS (Крен)" }
+            { 37 , " ADIS (Крен)" },
+            { 38 , " PNI Подсчитано (Курс)" },
+            { 39 , " PNI Подсчитано (Тангаж)" },
+            { 40 , " PNI Подсчитано (Крен)" },
+            { 41 , " MTI (Курс)" },
+            { 42 , " MTI (Тангаж)" },
+            { 43 , " MTI (Крен)" },
+            { 44 , " Маджвик (Курс)" },
+            { 45 , " Маджвик (Тангаж)" },
+            { 46 , " Маджвик (Крен)" }
         };
 
         //Шаблоны таблиц
@@ -76,26 +85,27 @@ namespace SensorReading
             {"Магнитные азимуты", new int[]{ 0, 1, 31, 32, 33, 34 } },  //Магнитные азимуты
             {"Акселерометры", new int[]{ 0, 1, 9, 10, 11, 15, 16, 17, 21, 22, 23} }, //Акселерометры
             {"Магнитометры", new int[] { 0, 1, 2, 3, 4, 6, 7, 8, 18, 19, 20, 24, 25, 26} }, //Магнитометры
-            {"Круги Эйлера", new int[] {0, 1, 12, 13, 14, 35, 36, 37} } //Курс, Крен, Тангаж
+            {"Круги Эйлера", new int[] {0, 1, 12, 13, 14, 38, 39, 40, 35, 36, 37, 41, 42, 43} }, //Курс, Крен, Тангаж
+            {"Маджвик", new int[] {0, 1, 44, 45, 46} } //Фильтр Маджвика
         };
         public class MadgwickFilter
         {
             // Кватернионы ориентации
-            private float q1 = 1f, q2 = 0f, q3 = 0f, q4 = 0f;
+            private double q1 = 1f, q2 = 0f, q3 = 0f, q4 = 0f;
 
             // Коэффициент фильтра
-            public float Beta { get; set; } = 0.1f;
+            public double Beta { get; set; } = 0.1f;
 
             // Обновление фильтра с использованием данных гироскопа и акселерометра
-            public (float Roll, float Pitch, float Yaw) Update(float gx, float gy, float gz, float ax, float ay, float az, int dataPeriod)
+            public (double Roll, double Pitch, double Yaw) Update(double gx, double gy, double gz, double ax, double ay, double az, int dataPeriod)
             {
-                float sampleFreq = 1000f / dataPeriod; // Частота в Гц, рассчитанная из периода накопления данных в мс
-                float recipNorm;
-                float s1, s2, s3, s4;
-                float qDot1, qDot2, qDot3, qDot4;
+                double sampleFreq = 1000f / dataPeriod; // Частота в Гц, рассчитанная из периода накопления данных в мс
+                double recipNorm;
+                double s1, s2, s3, s4;
+                double qDot1, qDot2, qDot3, qDot4;
 
                 // Нормализация данных акселерометра
-                recipNorm = (float)Math.Sqrt(ax * ax + ay * ay + az * az);
+                recipNorm = (double)Math.Sqrt(ax * ax + ay * ay + az * az);
                 ax /= recipNorm;
                 ay /= recipNorm;
                 az /= recipNorm;
@@ -113,7 +123,7 @@ namespace SensorReading
                 s4 = q2 * q3 - q1 * q4;
 
                 // Нормализация градиента для предотвращения деления на ноль
-                recipNorm = (float)Math.Sqrt(s1 * s1 + s2 * s2 + s3 * s3 + s4 * s4);
+                recipNorm = (double)Math.Sqrt(s1 * s1 + s2 * s2 + s3 * s3 + s4 * s4);
                 s1 /= recipNorm;
                 s2 /= recipNorm;
                 s3 /= recipNorm;
@@ -132,7 +142,7 @@ namespace SensorReading
                 q4 += qDot4 * (1.0f / sampleFreq);
 
                 // Нормализация кватернионов
-                recipNorm = (float)Math.Sqrt(q1 * q1 + q2 * q2 + q3 * q3 + q4 * q4);
+                recipNorm = (double)Math.Sqrt(q1 * q1 + q2 * q2 + q3 * q3 + q4 * q4);
                 q1 /= recipNorm;
                 q2 /= recipNorm;
                 q3 /= recipNorm;
@@ -476,8 +486,16 @@ namespace SensorReading
             double toAngle = 180 / Math.PI;
             double roll = Math.Atan(Y / Z) * toAngle;
             double pitch = Math.Atan(-X / Math.Sqrt(Y * Y + Z * Z)) * toAngle;
-            double yaw = Math.Atan2(my , mx) * toAngle;
-            
+            double yaw = 360 - Math.Atan2(my , mx) * toAngle;
+            if (yaw < 0)
+            {
+                yaw += 360;
+            }
+            else if (yaw >= 360)
+            {
+                yaw -= 360;
+            }
+
             return (roll, pitch, yaw);
         }
 
@@ -529,30 +547,38 @@ namespace SensorReading
                         double rm3100MagX = GetData(results[1]);// значение X (например, B3);
                         double rm3100MagY = GetData(results[2]);// значение Y (например, C3);
                         double rm3100MagZ = GetData(results[3]);// значение Z (например, D3);
-                        //Для PN
+
+                        //Для PNI
                         double pniYaw = GetData(results[11]);
                         double pniPitch = GetData(results[12]);
                         double pniRoll = GetData(results[13]);
+
                         double pniAcsY = GetData(results[14]);
                         double pniAcsX = -GetData(results[15]);
                         double pniAcsZ = GetData(results[16]);
+
                         double pniMagY = GetData(results[17]);
                         double pniMagX = -GetData(results[18]);
                         double pniMagZ = GetData(results[19]);
+
                         //Для ADIS
                         double adisAcsY = GetData(results[20]);
                         double adisAcsX = GetData(results[21]);
                         double adisAcsZ = -GetData(results[22]);
+
                         double adisMagY = GetData(results[23]);
                         double adisMagX = GetData(results[24]);
                         double adisMagZ = -GetData(results[25]);
+
                         double adisGiroY = GetData(results[26]);
                         double adisGiroX = GetData(results[27]);
                         double adisGiroZ = -GetData(results[28]);
+
                         //Для MTI
                         double mtiMagY = GetData(results[5]);
                         double mtiMagX = GetData(results[6]);
                         double mtiMagZ = -GetData(results[7]);
+
                         double mtiAcsY = GetData(results[8]);
                         double mtiAcsX = GetData(results[9]);
                         double mtiAcsZ = -GetData(results[10]);
@@ -568,27 +594,35 @@ namespace SensorReading
                         results.Add(azimuthMTI.ToString().Replace(',', '.'));
                         results.Add(azimuthADIS.ToString().Replace(',', '.'));
 
+                        // Эейлер из акселерометра и магнитометра
+                        //ADIS
+                        (double rADIS, double pADIS, double yADIS) = AccMagCounting(adisAcsX, adisAcsY, adisAcsZ, adisMagX, adisMagY);
+                        results.Add(yADIS.ToString().Replace(',', '.'));
+                        results.Add(pADIS.ToString().Replace(',', '.'));
+                        results.Add(rADIS.ToString().Replace(',', '.'));
+
+                        //PNI
+                        (double rPNI, double pPNI, double yPNI) = AccMagCounting(pniAcsX, pniAcsY, pniAcsZ, pniMagX, pniMagY);
+                        results.Add(yPNI.ToString().Replace(',','.'));
+                        results.Add(pPNI.ToString().Replace(',', '.'));
+                        results.Add(rPNI.ToString().Replace(',', '.'));
+
+                        //MTI
+                        (double rMTI, double pMTI, double yMTI) = AccMagCounting(mtiAcsX, mtiAcsY, mtiAcsZ, mtiMagX, mtiMagY);
+                        results.Add(yMTI.ToString().Replace(',', '.'));
+                        results.Add(pMTI.ToString().Replace(',', '.'));
+                        results.Add(rMTI.ToString().Replace(',', '.'));
+
                         //Маджвик
                         MadgwickFilter mgF = new MadgwickFilter();
 
-                        float ax = float.Parse(results[21], CultureInfo.InvariantCulture);
-                        float ay = float.Parse(results[22], CultureInfo.InvariantCulture);
-                        float az = float.Parse(results[23], CultureInfo.InvariantCulture);
-                        float gx = float.Parse(results[27], CultureInfo.InvariantCulture);
-                        float gy = float.Parse(results[28], CultureInfo.InvariantCulture);
-                        float gz = float.Parse(results[29], CultureInfo.InvariantCulture);
-                        var eulerAngles = mgF.Update( gx, gy, gz, ax, ay, az, int.Parse(dataPeriod));
+                        var eulerAngles = mgF.Update(adisGiroX, adisGiroY, adisGiroZ, adisAcsX, adisAcsY, adisAcsZ, int.Parse(dataPeriod));
 
-                        (float roll, float pitch, float yaw) = eulerAngles;
-                        //results.Add(roll.ToString());
-                        //results.Add(pitch.ToString());
-                        //results.Add(yaw.ToString());
+                        (double roll, double pitch, double yaw) = eulerAngles;
+                        results.Add(roll.ToString().Replace(',', '.'));
+                        results.Add(pitch.ToString().Replace(',', '.'));
+                        results.Add(yaw.ToString().Replace(',', '.'));
 
-                        // Эейлер из акселерометра и магнитометра
-                        (double r, double p, double y) = AccMagCounting(ax, ay, az, double.Parse(results[24], CultureInfo.InvariantCulture), double.Parse(results[25], CultureInfo.InvariantCulture));
-                        results.Add(y.ToString().Replace(',','.'));
-                        results.Add(p.ToString().Replace(',', '.'));
-                        results.Add(r.ToString().Replace(',', '.'));
                         string selectedTemplate = selectTableBox.SelectedItem.ToString();
                         WriteGridView(results, selectedTemplate, rowIndex);
                     }));
@@ -902,7 +936,7 @@ namespace SensorReading
         {
             for (int i = 0; i < SensorGridView.Rows.Count; i++)
             {
-                SensorGridView.Rows.RemoveAt(i);
+                SensorGridView.Rows.RemoveAt(3);
             }
         }
 
