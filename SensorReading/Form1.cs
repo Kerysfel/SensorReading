@@ -20,6 +20,7 @@ namespace SensorReading
         bool isReadingData = false;
         int currentMouseOver = 0;
         public Dictionary<int, string> spisokPropuskov = new Dictionary<int, string>();
+        List<string> results = new List<string>();
         //Предыдущая таблица
         public string lastName = "Все данные";
         //Словарь для хранения данных по каждому шаблону
@@ -434,7 +435,7 @@ namespace SensorReading
                 Console.WriteLine(ex.Message);
                 return null;
             }
-        }
+        } 
 
         public void WriteGridView(List<string> results, string selectedTemplate, int rowIndex)
         {
@@ -493,6 +494,25 @@ namespace SensorReading
             double result = Math.Round(double.Parse(data, CultureInfo.InvariantCulture), 2);
             return result;
         }
+
+        // Функция для преобразования измерений в строку с заменой запятой на точку
+        string FormatMeasurement(double measurement)
+        {
+            return measurement.ToString().Replace(',', '.');
+        }
+
+        // Обработка данных сенсоров и добавление результатов в список
+        void ProcessSensorData(double acsX, double acsY, double acsZ, double magX, double magY)
+        {
+            // Расчет углов Эйлера из данных акселерометра и магнитометра
+            (double roll, double pitch, double yaw) = AccMagCounting(acsX, acsY, acsZ, magX, magY);
+
+            // Добавление углов Эйлера в результаты с форматированием
+            results.Add($"{FormatMeasurement(yaw)}");
+            results.Add($"{FormatMeasurement(pitch)}");
+            results.Add($"{FormatMeasurement(roll)}");
+        }
+
         private async void StartDataReading()
         {
             while (isReadingData) //метка для остановки чтения
@@ -510,7 +530,8 @@ namespace SensorReading
                 {//Excel -atan2(x;y) C# -atan2(y;x)
                  //X - X * COS(Pitch) + Y * SIN(Pitch) * SIN(Roll) + Z * SIN(Pitch) * COS(Roll)
                  //Y - Z * SIN(Roll) - Y * COS(Roll)
-                    List<string> results = new List<string>(response.Split(';'));
+                    results.Clear();
+                    results.AddRange(response.Split(';'));
                     int len = SensorGridView.Rows.Count;
                     //Обновляем SensorGridView в основном потоке
                     BeginInvoke(new Action(() =>
@@ -583,24 +604,10 @@ namespace SensorReading
                         results.Add(azimuthMTI.ToString().Replace(',', '.'));
                         results.Add(azimuthADIS.ToString().Replace(',', '.'));
 
-                        // Эейлер из акселерометра и магнитометра
-                        //ADIS
-                        (double rADIS, double pADIS, double yADIS) = AccMagCounting(adisAcsX, adisAcsY, adisAcsZ, adisMagX, adisMagY);
-                        results.Add(yADIS.ToString().Replace(',', '.'));
-                        results.Add(pADIS.ToString().Replace(',', '.'));
-                        results.Add(rADIS.ToString().Replace(',', '.'));
-
-                        //PNI
-                        (double rPNI, double pPNI, double yPNI) = AccMagCounting(pniAcsX, pniAcsY, pniAcsZ, pniMagX, pniMagY);
-                        results.Add(yPNI.ToString().Replace(',','.'));
-                        results.Add(pPNI.ToString().Replace(',', '.'));
-                        results.Add(rPNI.ToString().Replace(',', '.'));
-
-                        //MTI
-                        (double rMTI, double pMTI, double yMTI) = AccMagCounting(mtiAcsX, mtiAcsY, mtiAcsZ, mtiMagX, mtiMagY);
-                        results.Add(yMTI.ToString().Replace(',', '.'));
-                        results.Add(pMTI.ToString().Replace(',', '.'));
-                        results.Add(rMTI.ToString().Replace(',', '.'));
+                        // Обработка данных для каждого сенсора
+                        ProcessSensorData(adisAcsX, adisAcsY, adisAcsZ, adisMagX, adisMagY);    //ADIS
+                        ProcessSensorData(pniAcsX, pniAcsY, pniAcsZ, pniMagX, pniMagY);         //PNI
+                        ProcessSensorData(mtiAcsX, mtiAcsY, mtiAcsZ, mtiMagX, mtiMagY);         //MTI   
 
                         //Маджвик
                         MadgwickFilter mgF = new MadgwickFilter();
