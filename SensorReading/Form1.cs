@@ -170,7 +170,7 @@ namespace SensorReading
         public MainForm()
         {
             InitializeComponent();
-            EnableDoubleBuffering(this.SensorGridView);
+            EnableDoubleBuffering(SensorGridView);
             ConnectGrin.BackColor = Color.DarkGreen; //Lime\DarkGreen
             ConnectGreenText.Font = new Font(ConnectGreenText.Font, FontStyle.Regular);
             ConnectGreenText.ForeColor = Color.Gray;
@@ -198,7 +198,15 @@ namespace SensorReading
             SetRoundedShape(ConnectYellowMini, 22);
             SetRoundedShape(ConnectRedMini, 22);
             SensorGridView.ClearSelection();
+
+            button1.MouseEnter += Button_MouseEnter;
+            button1.MouseLeave += Button_MouseLeave;
+            button2.MouseEnter += Button_MouseEnter;
+            button2.MouseLeave += Button_MouseLeave;
+            OpenFormFull.MouseEnter += Button_MouseEnter;
+            OpenFormFull.MouseLeave += Button_MouseLeave;
         }
+
         private void UpdateComPortsList()
         {
             ComConnectorsList.Items.Clear();
@@ -207,6 +215,7 @@ namespace SensorReading
                 ComConnectorsList.Items.Add(s);
             }
         }
+
         private void SaveCurrentGridViewData(string templateName)
         {
             if (!templatesData.ContainsKey(templateName))
@@ -314,7 +323,6 @@ namespace SensorReading
                             if (i != middle)
                             {
                                 SensorGridView[i, row].Style.ForeColor = Color.Transparent;
-                                //SensorGridView[i, row].Value = "";
                             }
                         }
                     }
@@ -346,7 +354,6 @@ namespace SensorReading
         private void MergeHeaderGrid()
         {
             SensorGridView.ColumnCount = 31;
-            SensorGridView.ColumnCount = 31;
 
             // Очищаем строки в DataGridView
             SensorGridView.Rows.Clear();
@@ -364,48 +371,39 @@ namespace SensorReading
             }
             SensorGridView.Columns[0].Width = 50;
             SensorGridView.Columns[1].Width = 80;
+        }
 
-            int totalwidth = SensorGridView.RowHeadersWidth + 1;
-
-            for (int i = 0; i < SensorGridView.Columns.Count; i++)
+        //Общий обработчик MouseEnter для кнопок
+        private void Button_MouseEnter(object sender, EventArgs e)
+        {
+            Button button = sender as Button;
+            if (button != null)
             {
-                totalwidth += SensorGridView.Columns[i].Width;
+                //Установка цвета в зависимости от идентификатора кнопки
+                button.BackColor = button.Name == "button1" ? Color.Red :
+                                   button.Name == "button2" ? Color.RoyalBlue :
+                                   Color.LightBlue;
             }
         }
 
-        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
+        //Общий обработчик MouseLeave для кнопок
+        private void Button_MouseLeave(object sender, EventArgs e)
         {
-            Application.Exit();
+            Button button = sender as Button;
+            if(button != null)
+            {
+                button.BackColor = Color.Transparent;
+            }
         }
-        
+
         private void button1_Click(object sender, EventArgs e)
         {
             Application.Exit();
         }
 
-        private void button1_MouseEnter(object sender, EventArgs e)
-        {
-            button1.BackColor = Color.Red;
-        }
-
-        private void button1_MouseLeave(object sender, EventArgs e)
-        {
-            button1.BackColor = Color.Transparent;
-        }
-
-        private void button2_MouseEnter(object sender, EventArgs e)
-        {
-            button2.BackColor = Color.RoyalBlue;
-        }
-
-        private void button2_MouseLeave(object sender, EventArgs e)
-        {
-            button2.BackColor = Color.Transparent;
-        }
-
         private void button2_Click(object sender, EventArgs e)
         {
-            this.WindowState = FormWindowState.Minimized;
+            WindowState = FormWindowState.Minimized;
         }
 
         private void panel1_MouseDown(object sender, MouseEventArgs e)
@@ -906,16 +904,6 @@ namespace SensorReading
                     MessageBox.Show("Данные успешно экспортированы в Excel.", "Экспорт завершен", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
-        }
-
-        private void OpenFormFull_MouseEnter(object sender, EventArgs e)
-        {
-            OpenFormFull.BackColor = Color.LightBlue;
-        }
-
-        private void OpenFormFull_MouseLeave(object sender, EventArgs e)
-        {
-            OpenFormFull.BackColor = Color.Transparent;
         }
 
         private void GoFullscreen(bool fullscreen)

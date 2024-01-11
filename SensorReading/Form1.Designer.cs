@@ -30,7 +30,7 @@ namespace SensorReading
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
             this.panel1 = new System.Windows.Forms.Panel();
             this.OpenFormFull = new System.Windows.Forms.Button();
             this.ConnectRedMini = new System.Windows.Forms.Panel();
@@ -100,8 +100,6 @@ namespace SensorReading
             this.OpenFormFull.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             this.OpenFormFull.UseVisualStyleBackColor = false;
             this.OpenFormFull.Click += new System.EventHandler(this.OpenFormFull_Click);
-            this.OpenFormFull.MouseEnter += new System.EventHandler(this.OpenFormFull_MouseEnter);
-            this.OpenFormFull.MouseLeave += new System.EventHandler(this.OpenFormFull_MouseLeave);
             // 
             // ConnectRedMini
             // 
@@ -164,8 +162,6 @@ namespace SensorReading
             this.button2.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             this.button2.UseVisualStyleBackColor = false;
             this.button2.Click += new System.EventHandler(this.button2_Click);
-            this.button2.MouseEnter += new System.EventHandler(this.button2_MouseEnter);
-            this.button2.MouseLeave += new System.EventHandler(this.button2_MouseLeave);
             // 
             // button1
             // 
@@ -183,8 +179,6 @@ namespace SensorReading
             this.button1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.button1.UseVisualStyleBackColor = false;
             this.button1.Click += new System.EventHandler(this.button1_Click);
-            this.button1.MouseEnter += new System.EventHandler(this.button1_MouseEnter);
-            this.button1.MouseLeave += new System.EventHandler(this.button1_MouseLeave);
             // 
             // ConnectComPort
             // 
@@ -309,12 +303,12 @@ namespace SensorReading
             this.SensorGridView.Location = new System.Drawing.Point(16, 223);
             this.SensorGridView.Name = "SensorGridView";
             this.SensorGridView.RowHeadersVisible = false;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Menu;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.Color.Black;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.Color.LightSteelBlue;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.Color.White;
-            this.SensorGridView.RowsDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Menu;
+            dataGridViewCellStyle5.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            dataGridViewCellStyle5.ForeColor = System.Drawing.Color.Black;
+            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.Color.LightSteelBlue;
+            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.Color.White;
+            this.SensorGridView.RowsDefaultCellStyle = dataGridViewCellStyle5;
             this.SensorGridView.Size = new System.Drawing.Size(772, 317);
             this.SensorGridView.TabIndex = 13;
             this.SensorGridView.CellPainting += new System.Windows.Forms.DataGridViewCellPaintingEventHandler(this.SensorGridView_CellPainting_1);
@@ -465,7 +459,6 @@ namespace SensorReading
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "SensorReader";
-            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainForm_FormClosed);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Signed)).EndInit();
