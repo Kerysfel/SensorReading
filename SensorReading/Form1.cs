@@ -8,6 +8,8 @@ using System.IO.Ports;
 using System.Globalization;
 using System.Reflection;
 using System.Collections.Generic;
+//Для записи в Excel
+//using OfficeOpenXml;
 
 namespace SensorReading
 {
@@ -25,6 +27,7 @@ namespace SensorReading
         public string lastName = "Все данные";
         //Словарь для хранения данных по каждому шаблону
         Dictionary<string, List<string[]>> templatesData = new Dictionary<string, List<string[]>>();
+        Dictionary<int, List<string>> excelOutput = new Dictionary<int, List<string>>();
 
         //Словарь для хранения настроек шаблонов
         Dictionary<int, string> cellDescriptions = new Dictionary<int, string>
@@ -544,6 +547,7 @@ namespace SensorReading
                         TimeSpan timeSpan = TimeSpan.FromSeconds(totalTimeInSeconds);
                         // Форматирование времени в формате "HH:mm:ss"
                         string formattedTime = timeSpan.ToString(@"hh\:mm\:ss");
+
                         SensorGridView.Rows[rowIndex].Cells[1].Value = formattedTime;
 
                         //Общие значения (Не трогать)
@@ -621,6 +625,7 @@ namespace SensorReading
 
                         string selectedTemplate = selectTableBox.SelectedItem.ToString();
                         WriteGridView(results, selectedTemplate, rowIndex);
+                        excelOutput.Add(excelOutput.Count(), new List<string>(results));
                     }));
                 }
             }
@@ -725,6 +730,7 @@ namespace SensorReading
             someImage.RotateFlip(rotateType);
             return someImage;
         }
+
         private void ToggleVisibility(bool status)
         {
             //Управление видимостью компонентов
@@ -848,11 +854,15 @@ namespace SensorReading
                 excel.Workbooks.Add();
                 Microsoft.Office.Interop.Excel._Worksheet worksheet = (Microsoft.Office.Interop.Excel._Worksheet)excel.ActiveSheet;
 
-                for (int i = 0; i < SensorGridView.Rows.Count - 1; i++)
+                for ( int i = 1; i < cellDescriptions.Count(); i++)
                 {
-                    for (int j = 0; j < SensorGridView.Columns.Count; j++)
+                    worksheet.Cells[1, i] = cellDescriptions[i];
+                }
+                for ( int i = 0; i < excelOutput.Count(); i++)
+                {
+                    for ( int j = 0; j < excelOutput[i].Count(); j++)
                     {
-                        worksheet.Cells[i + 1, j + 1] = SensorGridView.Rows[i].Cells[j].Value.ToString();
+                        worksheet.Cells[i+2, j+1] = excelOutput[i][j];
                     }
                 }
 
