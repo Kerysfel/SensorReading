@@ -8,6 +8,7 @@ using System.IO.Ports;
 using System.Globalization;
 using System.Reflection;
 using System.Collections.Generic;
+using Excel = Microsoft.Office.Interop.Excel;
 //Для записи в Excel
 //using OfficeOpenXml;
 
@@ -850,9 +851,10 @@ namespace SensorReading
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
                 // Создаём новый экземпляр Excel и книгу
-                Microsoft.Office.Interop.Excel.Application excel = new Microsoft.Office.Interop.Excel.Application();
+                Excel.Application excel = new Excel.Application();
                 excel.Workbooks.Add();
-                Microsoft.Office.Interop.Excel._Worksheet worksheet = (Microsoft.Office.Interop.Excel._Worksheet)excel.ActiveSheet;
+                Excel._Worksheet worksheet = (Excel._Worksheet)excel.ActiveSheet;
+                worksheet.Name = "Данные с платы";
 
                 for ( int i = 1; i < cellDescriptions.Count(); i++)
                 {
@@ -866,6 +868,10 @@ namespace SensorReading
                     }
                 }
 
+                Excel.Range range = worksheet.UsedRange;
+                range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+
+                worksheet.Columns.AutoFit();
                 worksheet.SaveAs(saveFileDialog.FileName);
                 excel.Quit();
 
