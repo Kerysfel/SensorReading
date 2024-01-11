@@ -218,7 +218,6 @@ namespace SensorReading
             this.ConnectGrin.Name = "ConnectGrin";
             this.ConnectGrin.Size = new System.Drawing.Size(25, 25);
             this.ConnectGrin.TabIndex = 4;
-            this.ConnectGrin.Paint += new System.Windows.Forms.PaintEventHandler(this.ConnectGrin_Paint);
             // 
             // ConnectYellow
             // 
@@ -319,8 +318,6 @@ namespace SensorReading
             this.SensorGridView.Size = new System.Drawing.Size(772, 317);
             this.SensorGridView.TabIndex = 13;
             this.SensorGridView.CellPainting += new System.Windows.Forms.DataGridViewCellPaintingEventHandler(this.SensorGridView_CellPainting_1);
-            this.SensorGridView.ColumnRemoved += new System.Windows.Forms.DataGridViewColumnEventHandler(this.SensorGridView_ColumnRemoved);
-            this.SensorGridView.Scroll += new System.Windows.Forms.ScrollEventHandler(this.SensorGridView_Scroll);
             this.SensorGridView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.SensorGridView_MouseClick);
             // 
             // DataPeriodBox
@@ -469,7 +466,6 @@ namespace SensorReading
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "SensorReader";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainForm_FormClosed);
-            this.Load += new System.EventHandler(this.MainForm_Load);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Signed)).EndInit();

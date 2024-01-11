@@ -9,8 +9,6 @@ using System.Globalization;
 using System.Reflection;
 using System.Collections.Generic;
 using Excel = Microsoft.Office.Interop.Excel;
-//Для записи в Excel
-//using OfficeOpenXml;
 
 namespace SensorReading
 {
@@ -843,54 +841,71 @@ namespace SensorReading
 
         private void SaveDataToFile_Click(object sender, EventArgs e)
         {
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Filter = "Excel Files|*.xlsx|All Files|*.*";
-            saveFileDialog.Title = "Сохранить данные как Excel файл";
-            saveFileDialog.FileName = "test.xlsx";
+            SaveFileDialog saveFileDialog = new SaveFileDialog
+            {
+                Filter = "Excel Files|*.xlsx|All Files|*.*",
+                Title = "Сохранить данные как Excel файл",
+                FileName = "test.xlsx"
+            };
 
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
-                // Создаём новый экземпляр Excel и книгу
-                Excel.Application excel = new Excel.Application();
-                excel.Workbooks.Add();
-                Excel._Worksheet worksheet = (Excel._Worksheet)excel.ActiveSheet;
-                worksheet.Name = "Данные с платы";
+                Excel.Application excel = null;
+                Excel._Worksheet worksheet = null;
+                try
+                {
+                    // Создаём экземпляр приложения Excel
+                    excel = new Excel.Application();
 
-                for ( int i = 1; i < cellDescriptions.Count(); i++)
-                {
-                    worksheet.Cells[1, i] = cellDescriptions[i];
-                }
-                for ( int i = 0; i < excelOutput.Count(); i++)
-                {
-                    for ( int j = 0; j < excelOutput[i].Count(); j++)
+                    // Добавляем новую книгу
+                    excel.Workbooks.Add();
+
+                    // Получаем активный лист
+                    worksheet = (Excel._Worksheet)excel.ActiveSheet;
+                    // Устанавливаем название листа
+                    worksheet.Name = "Данные с платы";
+
+                    // Заполняем заголовки столбцов
+                    for (int i = 1; i < cellDescriptions.Count(); i++)
                     {
-                        worksheet.Cells[i+2, j+1] = excelOutput[i][j];
+                        worksheet.Cells[1, i] = cellDescriptions[i];
                     }
+
+                    // Заполняем данные
+                    for (int i = 0; i < excelOutput.Count(); i++)
+                    {
+                        for (int j = 0; j < excelOutput[i].Count(); j++)
+                        {
+                            worksheet.Cells[i + 2, j + 1] = excelOutput[i][j];
+                        }
+                    }
+
+                    // Выравниваем данные по центру и автоматически подгоняем ширину столбцов
+                    worksheet.UsedRange.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+                    worksheet.Columns.AutoFit();
+
+                    // Сохраняем лист
+                    worksheet.SaveAs(saveFileDialog.FileName);
                 }
+                catch (Exception ex)
+                {
+                    // Обработка исключений
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    // Очищаем ресурсы
+                    if (worksheet != null)
+                        System.Runtime.InteropServices.Marshal.ReleaseComObject(worksheet);
+                    if (excel != null)
+                    {
+                        excel.Quit();
+                        System.Runtime.InteropServices.Marshal.ReleaseComObject(excel);
+                    }
 
-                Excel.Range range = worksheet.UsedRange;
-                range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
-
-                worksheet.Columns.AutoFit();
-                worksheet.SaveAs(saveFileDialog.FileName);
-                excel.Quit();
-
-                // Очищаем ресурсы
-                System.Runtime.InteropServices.Marshal.ReleaseComObject(worksheet);
-                System.Runtime.InteropServices.Marshal.ReleaseComObject(excel);
-
-                MessageBox.Show("Данные успешно экспортированы в Excel.", "Экспорт завершен", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Данные успешно экспортированы в Excel.", "Экспорт завершен", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             }
-        }
-
-        private void ConnectGrin_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
-
-        private void MainForm_Load(object sender, EventArgs e)
-        {
-
         }
 
         private void OpenFormFull_MouseEnter(object sender, EventArgs e)
@@ -936,15 +951,6 @@ namespace SensorReading
             }
         }
 
-        private void GridViewBar_Scroll(object sender, ScrollEventArgs e)
-        {
-            SensorGridView.HorizontalScrollingOffset = e.NewValue;
-        }
-
-        private void SensorGridView_Scroll(object sender, ScrollEventArgs e)
-        {
-        }
-
         private Dictionary<(int Row, int Column), object> originalValues = new Dictionary<(int Row, int Column), object>();
         private void CloseColumn(object sender, System.EventArgs e)
         {
@@ -966,6 +972,7 @@ namespace SensorReading
                 }
             }
         }
+
         private void ReturnAllColumns(object sender, System.EventArgs e)
         {
             int row = SensorGridView.Rows.Count - 3;
@@ -976,11 +983,6 @@ namespace SensorReading
 
             originalValues.Clear();
             spisokPropuskov.Clear();
-        }
-
-        private void SensorGridView_ColumnRemoved(object sender, DataGridViewColumnEventArgs e)
-        {
-            
         }
 
         private void SensorGridView_MouseClick(object sender, MouseEventArgs e)
