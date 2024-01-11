@@ -517,116 +517,138 @@ namespace SensorReading
         {
             while (isReadingData) //метка для остановки чтения
             {
-                string dataPeriod = string.Empty;
-
-                Invoke(new Action(() =>
-                {
-                    dataPeriod = DataPeriodBox.SelectedItem.ToString();
-                }));
+                string dataPeriod = await GetSelectedDataPeriodAsync();
 
                 string response = await Task.Run(() => SendAndReadData(dataPeriod));
 
                 if (!string.IsNullOrEmpty(response))
-                {//Excel -atan2(x;y) C# -atan2(y;x)
-                 //X - X * COS(Pitch) + Y * SIN(Pitch) * SIN(Roll) + Z * SIN(Pitch) * COS(Roll)
-                 //Y - Z * SIN(Roll) - Y * COS(Roll)
-                    results.Clear();
-                    results.AddRange(response.Split(';'));
-                    int len = SensorGridView.Rows.Count;
-                    //Обновляем SensorGridView в основном потоке
-                    BeginInvoke(new Action(() =>
-                    {
-                        int rowIndex = 3;
-                        SensorGridView.Rows.Insert(rowIndex,1);
-                        SensorGridView.Rows[rowIndex].Cells[0].Value = len-3;
-                        int totalTimeInSeconds = int.Parse(results[0], CultureInfo.InvariantCulture) / 1000;
-                        // Преобразование общего времени в секундах в часы, минуты и секунды
-                        TimeSpan timeSpan = TimeSpan.FromSeconds(totalTimeInSeconds);
-                        // Форматирование времени в формате "HH:mm:ss"
-                        string formattedTime = timeSpan.ToString(@"hh\:mm\:ss");
-
-                        SensorGridView.Rows[rowIndex].Cells[1].Value = formattedTime;
-
-                        //Общие значения (Не трогать)
-                        double Pitch = GetData(results[12]) * Math.PI / 180;// значение Тангажа (например, G3);
-                        double Roll = GetData(results[13]) * Math.PI / 180;// значение Крена (например, H3);
-                                                                           //RM3100 2-4 Магнит
-                                                                           //MTI 6-8 магнит, 9-12 Акс
-                                                                           //PNI 12-14 Эйлер, 15-17 Акс, 18-20 Магнит
-                                                                           //ADIS 21-23 Акс, 24-26 Магнит, 27-29 Гиро
-                        //Для RM3100
-                        double rm3100MagX = GetData(results[1]);// значение X (например, B3);
-                        double rm3100MagY = GetData(results[2]);// значение Y (например, C3);
-                        double rm3100MagZ = GetData(results[3]);// значение Z (например, D3);
-
-                        //Для PNI
-                        double pniYaw = GetData(results[11]);
-                        double pniPitch = GetData(results[12]);
-                        double pniRoll = GetData(results[13]);
-
-                        double pniAcsY = GetData(results[14]);
-                        double pniAcsX = -GetData(results[15]);
-                        double pniAcsZ = GetData(results[16]);
-
-                        double pniMagY = GetData(results[17]);
-                        double pniMagX = -GetData(results[18]);
-                        double pniMagZ = GetData(results[19]);
-
-                        //Для ADIS
-                        double adisAcsY = GetData(results[20]);
-                        double adisAcsX = GetData(results[21]);
-                        double adisAcsZ = -GetData(results[22]);
-
-                        double adisMagY = GetData(results[23]);
-                        double adisMagX = GetData(results[24]);
-                        double adisMagZ = -GetData(results[25]);
-
-                        double adisGiroY = GetData(results[26]);
-                        double adisGiroX = GetData(results[27]);
-                        double adisGiroZ = -GetData(results[28]);
-
-                        //Для MTI
-                        double mtiMagY = GetData(results[5]);
-                        double mtiMagX = GetData(results[6]);
-                        double mtiMagZ = -GetData(results[7]);
-
-                        double mtiAcsY = GetData(results[8]);
-                        double mtiAcsX = GetData(results[9]);
-                        double mtiAcsZ = -GetData(results[10]);
-
-                        // Расчет магнитного азимута
-                        double azimuthRM3100 = MagAz(Pitch, Roll, rm3100MagX, rm3100MagY, rm3100MagZ);
-                        double azimuthPNI = MagAz(Pitch, Roll, pniMagX, pniMagY, pniMagZ);
-                        double azimuthMTI = MagAz(Pitch, Roll, mtiMagX, mtiMagY, mtiMagZ);
-                        double azimuthADIS = MagAz(Pitch, Roll, adisMagX, adisMagY, adisMagZ);
-
-                        results.Add(azimuthRM3100.ToString().Replace(',', '.'));
-                        results.Add(azimuthPNI.ToString().Replace(',', '.'));
-                        results.Add(azimuthMTI.ToString().Replace(',', '.'));
-                        results.Add(azimuthADIS.ToString().Replace(',', '.'));
-
-                        // Обработка данных для каждого сенсора
-                        ProcessSensorData(adisAcsX, adisAcsY, adisAcsZ, adisMagX, adisMagY);    //ADIS
-                        ProcessSensorData(pniAcsX, pniAcsY, pniAcsZ, pniMagX, pniMagY);         //PNI
-                        ProcessSensorData(mtiAcsX, mtiAcsY, mtiAcsZ, mtiMagX, mtiMagY);         //MTI   
-
-                        //Маджвик
-                        MadgwickFilter mgF = new MadgwickFilter();
-
-                        var eulerAngles = mgF.Update(adisGiroX, adisGiroY, adisGiroZ, adisAcsX, adisAcsY, adisAcsZ, int.Parse(dataPeriod));
-
-                        (double roll, double pitch, double yaw) = eulerAngles;
-                        results.Add(roll.ToString().Replace(',', '.'));
-                        results.Add(pitch.ToString().Replace(',', '.'));
-                        results.Add(yaw.ToString().Replace(',', '.'));
-
-                        string selectedTemplate = selectTableBox.SelectedItem.ToString();
-                        WriteGridView(results, selectedTemplate, rowIndex);
-                        excelOutput.Add(excelOutput.Count(), new List<string>(results));
-                    }));
+                {
+                    await UpdateUIAsync(response);
                 }
             }
         }
+
+        private async Task<string> GetSelectedDataPeriodAsync()
+        {
+            return await Task.Run(() =>
+            {
+                string dataPeriod = string.Empty;
+                Invoke(new Action(() =>
+                {
+                    dataPeriod = DataPeriodBox.SelectedItem.ToString();
+                }));
+                return dataPeriod;
+            });
+        }
+
+        private async Task UpdateUIAsync(string response)
+        {
+            //Здесь используется Task.Run для выполнения тяжелых операций в отдельном потоке.
+            await Task.Run(() =>
+            {
+                results.Clear();
+                results.AddRange(response.Split(';'));
+
+                //Обновляем SensorGridView в основном потоке
+                int rowIndex = 3;
+                Invoke((MethodInvoker)(() =>
+                {
+                    SensorGridView.Rows.Insert(rowIndex, 1);
+                }));
+                
+                SensorGridView.Rows[rowIndex].Cells[0].Value = SensorGridView.Rows.Count - 3;
+
+                int totalTimeInSeconds = int.Parse(results[0], CultureInfo.InvariantCulture) / 1000;
+                // Преобразование общего времени в секундах в часы, минуты и секунды
+                TimeSpan timeSpan = TimeSpan.FromSeconds(totalTimeInSeconds);
+                // Форматирование времени в формате "HH:mm:ss"
+                string formattedTime = timeSpan.ToString(@"hh\:mm\:ss");
+                SensorGridView.Rows[rowIndex].Cells[1].Value = formattedTime;
+
+                //Общие значения (Не трогать)
+                double Pitch = GetData(results[12]) * Math.PI / 180;// значение Тангажа (например, G3);
+                double Roll = GetData(results[13]) * Math.PI / 180;// значение Крена (например, H3);
+                                                                    //RM3100 2-4 Магнит
+                                                                    //MTI 6-8 магнит, 9-12 Акс
+                                                                    //PNI 12-14 Эйлер, 15-17 Акс, 18-20 Магнит
+                                                                    //ADIS 21-23 Акс, 24-26 Магнит, 27-29 Гиро
+                                                                    //Для RM3100
+                double rm3100MagX = GetData(results[1]);// значение X (например, B3);
+                double rm3100MagY = GetData(results[2]);// значение Y (например, C3);
+                double rm3100MagZ = GetData(results[3]);// значение Z (например, D3);
+
+                //Для PNI
+                double pniYaw = GetData(results[11]);
+                double pniPitch = GetData(results[12]);
+                double pniRoll = GetData(results[13]);
+
+                double pniAcsY = GetData(results[14]);
+                double pniAcsX = -GetData(results[15]);
+                double pniAcsZ = GetData(results[16]);
+
+                double pniMagY = GetData(results[17]);
+                double pniMagX = -GetData(results[18]);
+                double pniMagZ = GetData(results[19]);
+
+                //Для ADIS
+                double adisAcsY = GetData(results[20]);
+                double adisAcsX = GetData(results[21]);
+                double adisAcsZ = -GetData(results[22]);
+
+                double adisMagY = GetData(results[23]);
+                double adisMagX = GetData(results[24]);
+                double adisMagZ = -GetData(results[25]);
+
+                double adisGiroY = GetData(results[26]);
+                double adisGiroX = GetData(results[27]);
+                double adisGiroZ = -GetData(results[28]);
+
+                //Для MTI
+                double mtiMagY = GetData(results[5]);
+                double mtiMagX = GetData(results[6]);
+                double mtiMagZ = -GetData(results[7]);
+
+                double mtiAcsY = GetData(results[8]);
+                double mtiAcsX = GetData(results[9]);
+                double mtiAcsZ = -GetData(results[10]);
+
+                // Расчет магнитного азимута
+                double azimuthRM3100 = MagAz(Pitch, Roll, rm3100MagX, rm3100MagY, rm3100MagZ);
+                double azimuthPNI = MagAz(Pitch, Roll, pniMagX, pniMagY, pniMagZ);
+                double azimuthMTI = MagAz(Pitch, Roll, mtiMagX, mtiMagY, mtiMagZ);
+                double azimuthADIS = MagAz(Pitch, Roll, adisMagX, adisMagY, adisMagZ);
+
+                results.Add(azimuthRM3100.ToString().Replace(',', '.'));
+                results.Add(azimuthPNI.ToString().Replace(',', '.'));
+                results.Add(azimuthMTI.ToString().Replace(',', '.'));
+                results.Add(azimuthADIS.ToString().Replace(',', '.'));
+
+                // Обработка данных для каждого сенсора
+                ProcessSensorData(adisAcsX, adisAcsY, adisAcsZ, adisMagX, adisMagY);    //ADIS
+                ProcessSensorData(pniAcsX, pniAcsY, pniAcsZ, pniMagX, pniMagY);         //PNI
+                ProcessSensorData(mtiAcsX, mtiAcsY, mtiAcsZ, mtiMagX, mtiMagY);         //MTI   
+
+                //Маджвик
+                MadgwickFilter mgF = new MadgwickFilter();
+
+                var eulerAngles = mgF.Update(adisGiroX, adisGiroY, adisGiroZ, adisAcsX, adisAcsY, adisAcsZ, int.Parse("3000"));
+
+                (double roll, double pitch, double yaw) = eulerAngles;
+                results.Add(roll.ToString().Replace(',', '.'));
+                results.Add(pitch.ToString().Replace(',', '.'));
+                results.Add(yaw.ToString().Replace(',', '.'));
+
+                //Теперь возвращаемся в поток UI для обновления пользовательского интерфейса
+                Invoke((MethodInvoker)(() =>
+                {
+                    string selectedTemplate = selectTableBox.SelectedItem.ToString();
+                    WriteGridView(results, selectedTemplate, rowIndex);
+                }));
+
+                excelOutput.Add(excelOutput.Count(), new List<string>(results));
+            });
+        }
+
         private bool IsListBoxSelectionValid(ListBox listBox, string errorMessage)
         {
             if (listBox.SelectedIndex == -1)
@@ -636,6 +658,7 @@ namespace SensorReading
             }
             return true;
         }
+
         private async void ConnectComPort_Click(object sender, EventArgs e)
         {
             if (!IsListBoxSelectionValid(ComConnectorsList, "Укажите COM-порт для чтения.") ||
